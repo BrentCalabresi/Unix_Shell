@@ -331,17 +331,17 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
-    pid_t forep=fgpid(jobs);
-    int jidp=pid2jid(forep);
-    if(forep==0||jidp==0)
+    pid_t FGproc=fgpid(jobs);
+    int FGjid=pid2jid(FGproc);
+    if(FGproc==0||FGjid==0)
 	return;
     
-    if(forep > 0)
+    if(FGproc > 0)
     {
-	kill(-forep,SIGINT);
-    	printf("Job [%d] (%d) terminated by signal %d\n",jidp,forep,SIGINT);
-	deletejob(jobs,forep); 
-	waitpid(forep,NULL,0);
+	kill(-FGproc,SIGINT);
+    	printf("Job [%d] (%d) terminated by signal %d\n",FGjid,FGproc,SIGINT); 
+	deletejob(jobs,FGproc);
+	waitpid(FGproc,NULL,0);
     }	
     return;
 }
