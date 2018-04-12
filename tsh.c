@@ -284,6 +284,7 @@ int builtin_cmd(char **argv)
                 return 1;
         }
         if(!strcmp(argv[0], "bg")){
+		do_bgfg(argv);
                 return 1;
         }
 
@@ -353,7 +354,20 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig) 
 {
+	pid_t FGproc=fgpid(jobs);
+    int FGjid=pid2jid(FGproc);
+    if(FGproc==0||FGjid==0)
+        return;
+
+    if(FGproc > 0)
+    {
+        kill(-FGproc,SIGTSTP);
+        printf("Job [%d] (%d) terminated by signal %d\n",FGjid,FGproc,SIGTSTP);
+        deletejob(jobs,FGproc);
+        waitpid(FGproc,NULL,0);
+    }
     return;
+
 }
 
 /*********************
