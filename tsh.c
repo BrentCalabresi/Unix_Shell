@@ -170,23 +170,22 @@ void eval(char *cmdline)
 	int background;
 	pid_t pid;
 	struct job_t* job;
-	if (argv[0]==NULL) return;
 
 	//Job mask
-	/*sigset_t mask;
+	sigset_t mask;
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGCHLD);
 	sigaddset(&mask, SIGINT);
 	sigaddset(&mask, SIGTSTP);
-	*/
+	
 	strcpy(buf, cmdline);
 	background = parseline(buf,argv);
-	if((argv[0] == NULL)){
-		return;
-	}
 
 	if(!builtin_cmd(argv)){
+		sigprocmask(SIG_BLOCK, &mask, NULL);
 		if((pid = fork()) == 0){
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
+			setpgid(0,0);
 			if(execve(argv[0],argv,environ)<0){
 				printf("%s: No such command\n",argv[0]);
 				exit(0);
@@ -196,11 +195,12 @@ void eval(char *cmdline)
 
 		if(!background){
 			addjob(jobs, pid, FG, cmdline);
-			//sigprocmask(SIG_UNBLOCK, &mask, NULL);
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
 			waitfg(pid);
 		}
 		else {
 			addjob(jobs, pid, BG, cmdline);
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
 			job = getjobpid(jobs,pid);
 			printf("[%d] (%d) %s", job->jid,job->pid,cmdline);
 
@@ -331,6 +331,18 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
+    pid_t forep=fgpid(jobs);
+    int jidp=pid2jid(forep);
+    if(forep==0||jidp==0)
+	return;
+    
+    if(forep > 0)
+    {
+	kill(-forep,SIGINT);
+    	printf("Job [%d] (%d) terminated by signal %d\n",jidp,forep,SIGINT);
+	deletejob(jobs,forep); 
+	waitpid(forep,NULL,0);
+    }	
     return;
 }
 
