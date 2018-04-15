@@ -326,23 +326,23 @@ void sigchld_handler(int sig)
     int CHLDjob;
     int status = -1;
     
-    if((CHLDpid = waitpid(-1,&status, WUNTRACED|WNOHANG)) > 0)
+    if((CHLDpid = waitpid(-1,&status, WUNTRACED|WNOHANG)) > 0)//If zombie children exist
     {
-	    if(WIFEXITED(status))
+	    if(WIFEXITED(status))//If child process exited normally, just delete it
 	    {
 		    deletejob(jobs,CHLDpid);
 	    }
-	    else if(WIFSIGNALED(status))
+	    else if(WIFSIGNALED(status))//If it was signalled to stop, indicate it so
 	    {
 		CHLDjob = pid2jid(CHLDpid);
 		deletejob(jobs,CHLDpid);
 		printf("Job [%d] (%d) terminated by signal %d\n",pid2jid(CHLDpid),CHLDpid,getjobpid(jobs,CHLDpid)->pid);
 
-	    } else if (WIFSTOPPED(status))
+	    } else if (WIFSTOPPED(status))//If process is currently stopped due to signal
 	    {
 		    printf("Job [%d] (%d) stopped by signal %d\n",pid2jid(CHLDpid),CHLDpid,getjobpid(jobs,CHLDpid)->pid);
-		    struct job_t *changes = getjobpid(jobs,CHLDpid);
-		    changes->state = ST;//Apply change in jobs list
+		    struct job_t *toUpdate = getjobpid(jobs,CHLDpid);
+		    toUpdate->state = ST;//Apply change in jobs list
 	    } 
      }
 }
@@ -356,8 +356,7 @@ void sigint_handler(int sig)
 {
     pid_t FGproc=fgpid(jobs);
     int FGjid=pid2jid(FGproc);
-    if(FGproc==0||FGjid==0)
-	return;
+    if(FGproc==0||FGjid==0) return;
     
     if(FGproc > 0)
     {
@@ -387,12 +386,11 @@ void sigtstp_handler(int sig)
     {
 	struct job_t *job = getjobpid(jobs, FGproc);
 	job->state = ST;//Update job state
-	kill(-FGproc,SIGTSTP);
+	kill(-FGproc,SIGTSTP);//Send SIGTSTP to all related processes
 	
 	printf("Job [%d] (%d) stopped by signal %d\n",FGjob,FGproc,SIGTSTP);
 
     }
-
     return;
 }
 
