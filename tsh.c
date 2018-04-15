@@ -347,7 +347,7 @@ void do_bgfg(char **argv)
       printf("[%d] (%d) %s",getjobpid(jobs,jobid)->jid,getjobpid(jobs,jobid)->pid,getjobpid(jobs,jobid)->cmdline);
      }
 
-     listjobs(jobs);
+     //listjobs(jobs);
     return;
 }
 
