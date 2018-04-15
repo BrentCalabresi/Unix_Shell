@@ -1,7 +1,7 @@
 /* 
  * tsh - A tiny shell program with job control
- * 
- * <Put your name and login ID here>
+ * Brent Calabresi - bcalabre
+ * Clay Emmel - cemmel 
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -296,61 +296,53 @@ int builtin_cmd(char **argv)
 /* 
  * do_bgfg - Execute the builtin bg and fg commands
  */
+
 void do_bgfg(char **argv) 
 {
 	char* p;
-    int jobid;
+    int jid;//job id
 
-      if(argv[1]==NULL) //if NULL argument is passed after bg/fg
-      {
-         printf("%s command requires PID or %%jobid argument\n",argv[0]);
+      if(argv[1]==NULL){
+				
+         printf("%s command requires PID or %%jid argument\n",argv[0]);
          return;
       }
-      if((p = strstr(argv[1],"%"))!=NULL)//for arguments containing jobpid
-      {
+      if((p = strstr(argv[1],"%"))!=NULL){
                p++;
-               jobid=atoi(p);
-                if(getjobjid(jobs,jobid)!=NULL)
-		  jobid=getjobjid(jobs,jobid)->pid;
-                else
-	        {
-		  printf("%%[%d]: no such job\n",atoi(p));//if arguments contain false jobpid
+               jid=atoi(p);
+                if(getjobjid(jobs,jid)!=NULL)
+		  jid=getjobjid(jobs,jid)->pid;
+                else {
+		  printf("%%[%d]: no such job\n",atoi(p));
 		  return;
                 }
       }
-      else if(isdigit(argv[1][0]))
-      {
-
-	jobid=atoi(argv[1]);    //argv[1] is the pid.
-        if(getjobpid(jobs,jobid)==NULL)
-	  {
-	    printf("(%d) no such process\n",jobid);
+      else if(isdigit(argv[1][0])){
+	jid=atoi(argv[1]);    //argv[1] is the pid
+        if(getjobpid(jobs,jid)==NULL){
+	    printf("(%d) no such process\n",jid);
             return;
           }
       }
-      else
-        {
-	 printf("%s: argument must be a PID or %%jobid\n",argv[0]);//invalid pid
+      else {
+	 printf("%s: argument has to be a PID or %%jid\n",argv[0]);//invalid pid
          return;
         }
 
-      kill(-jobid,SIGCONT);    //continuing the stopped execution
+      kill(-jid,SIGCONT); //resume
 
-     if(strcmp(argv[0],"fg")==0) //for fg argument
-     {
-       getjobpid(jobs,jobid)->state=FG; //set the state of foreground jobs
-       waitfg(jobid);//waiting for foreground jobs to terminate
+     if(strcmp(argv[0],"fg")==0) {
+       getjobpid(jobs,jid)->state=FG; 
+       waitfg(jid);//wait
      }
-     else
-     {
-      getjobpid(jobs,jobid)->state =BG;//set the state of background jobs
-      printf("[%d] (%d) %s",getjobpid(jobs,jobid)->jid,getjobpid(jobs,jobid)->pid,getjobpid(jobs,jobid)->cmdline);
+     else {
+      getjobpid(jobs,jid)->state =BG;
+      printf("[%d] (%d) %s",getjobpid(jobs,jid)->jid,getjobpid(jobs,jid)->pid,getjobpid(jobs,jid)->cmdline);
      }
-
+     //don't need this anhymore
      //listjobs(jobs);
     return;
 }
-
 
 void waitfg(pid_t pid)
 {
