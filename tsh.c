@@ -322,7 +322,29 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig) 
 {
-    return;
+    pid_t CHLDpid;
+    int CHLDjob;
+    int status = -1;
+    
+    if((CHLDpid = waitpid(-1,&status, WUNTRACED|WNOHANG)) > 0)
+    {
+	    if(WIFEXITED(status))
+	    {
+		    deletejob(jobs,CHLDpid);
+	    }
+	    else if(WIFSIGNALED(status))
+	    {
+		CHLDjob = pid2jid(CHLDpid);
+		deletejob(jobs,CHLDpid);
+		printf("Job [%d] (%d) terminated by signal %d\n",pid2jid(CHLDpid),CHLDpid,getjobpid(jobs,CHLDpid)->pid);
+
+	    } else if (WIFSTOPPED(status))
+	    {
+		    printf("Job [%d] (%d) stopped by signal %d\n",pid2jid(CHLDpid),CHLDpid,getjobpid(jobs,CHLDpid)->pid);
+		    struct job_t *changes = getjobpid(jobs,CHLDpid);
+		    changes->state = ST;//Apply change in jobs list
+	    } 
+     }
 }
 
 /* 
@@ -339,10 +361,10 @@ void sigint_handler(int sig)
     
     if(FGproc > 0)
     {
-	kill(-FGproc,SIGINT);
-    	printf("Job [%d] (%d) terminated by signal %d\n",FGjid,FGproc,SIGINT); 
+	kill(-FGproc,SIGINT);//Kill all processes with FG job pid
+    	printf("\nJob [%d] (%d) terminated by signal %d\n",FGjid,FGproc,SIGINT); 
 	deletejob(jobs,FGproc);
-	waitpid(FGproc,NULL,0);
+	waitpid(FGproc,NULL,0);//Reap
     }	
     return;
 }
