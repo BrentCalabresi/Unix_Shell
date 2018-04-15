@@ -383,11 +383,11 @@ void sigchld_handler(int sig)
 	    {
 		CHLDjob = pid2jid(CHLDpid);
 		deletejob(jobs,CHLDpid);
-		printf("Job [%d] (%d) terminated by signal %d\n",pid2jid(CHLDpid),CHLDpid,SIGCHLD;
+		printf("Job [%d] (%d) terminated by signal %d\n",pid2jid(CHLDpid),CHLDpid,SIGCHLD);
 
 	    } else if (WIFSTOPPED(status))//If process is currently stopped due to signal
 	    {
-		    printf("Job [%d] (%d) stopped by signal %d\n",pid2jid(CHLDpid),CHLDpid,SIGCHLD;
+		    printf("Job [%d] (%d) stopped by signal %d\n",pid2jid(CHLDpid),CHLDpid,SIGCHLD);
 		    struct job_t *toUpdate = getjobpid(jobs,CHLDpid);
 		    toUpdate->state = ST;//Apply change in jobs list
 	    } 
