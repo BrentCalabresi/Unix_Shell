@@ -354,21 +354,26 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig) 
 {
-	pid_t FGproc=fgpid(jobs);
-    int FGjid=pid2jid(FGproc);
-    if(FGproc==0||FGjid==0)
-        return;
-
+    //Get foreground process
+    pid_t FGproc = fgpid(jobs);
+    //Get job id
+    int FGjob = pid2jid(FGproc);
+    
+    if(FGproc == 0 || FGjob == 0) return;
+   
     if(FGproc > 0)
     {
-        kill(-FGproc,SIGTSTP);
-        printf("Job [%d] (%d) terminated by signal %d\n",FGjid,FGproc,SIGTSTP);
-        deletejob(jobs,FGproc);
-        waitpid(FGproc,NULL,0);
-    }
-    return;
+	struct job_t *job = getjobpid(jobs, FGproc);
+	job->state = ST;//Update job state
+	kill(-FGproc,SIGTSTP);
+	
+	printf("Job [%d] (%d) stopped by signal %d\n",FGjob,FGproc,SIGTSTP);
 
+    }
+
+    return;
 }
+
 
 /*********************
  * End signal handlers
